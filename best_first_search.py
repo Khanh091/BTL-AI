@@ -1,15 +1,21 @@
 from heapq import heappush, heappop
 from constants import *
 
-def heuristic(a, b):
+def heuristic_manhattan(a, b):
     return abs(a[0] - b[0]) + abs(a[1] - b[1])  # Manhattan distance
 
-def best_first_search(grid, start, end):
+def heuristic_euclidean(a, b):
+    return ((a[0] - b[0]) ** 2 + (a[1] - b[1]) ** 2) ** 0.5  # Euclidean distance
+
+def heuristic_chebyshev(a, b):
+    return max(abs(a[0] - b[0]), abs(a[1] - b[1]))  # Chebyshev distance
+
+def best_first_search(grid, start, end, heuristic_func=heuristic_manhattan):
     if not start or not end:
         return []
 
     open_list = []
-    heappush(open_list, (heuristic(start, end), start))
+    heappush(open_list, (heuristic_func(start, end), start))
     came_from = {}
     visited = set()
 
@@ -33,6 +39,6 @@ def best_first_search(grid, start, end):
             if (0 <= r < GRID_SIZE and 0 <= c < GRID_SIZE and
                 grid.grid[r][c] != WALL and neighbor not in visited):
                 came_from[neighbor] = current
-                heappush(open_list, (heuristic(neighbor, end), neighbor))
+                heappush(open_list, (heuristic_func(neighbor, end), neighbor))
 
     return []  # No path found
