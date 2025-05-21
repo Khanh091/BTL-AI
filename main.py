@@ -1,20 +1,20 @@
 import pygame
 from grid import Grid
+from ui import UI
 from best_first_search import best_first_search, heuristic_manhattan, heuristic_euclidean, heuristic_chebyshev
 from constants import *
 
 def main():
     pygame.init()
-    screen = pygame.display.set_mode((WINDOW_SIZE, WINDOW_SIZE))
-    pygame.display.set_caption("Best First Search Pathfinding")
     clock = pygame.time.Clock()
     grid = Grid()
+    ui = UI()
     mode = 'start'
     heuristic = heuristic_manhattan
     heuristic_name = "Manhattan"
-    font = pygame.font.SysFont("arial", 20)
     no_path_message = None
     no_path_timer = 0
+    visited_count = 0
 
     running = True
     while running:
@@ -22,52 +22,38 @@ def main():
             if event.type == pygame.QUIT:
                 running = False
             elif event.type == pygame.MOUSEBUTTONDOWN:
-                grid.handle_click(event.pos, mode)
+                pos = event.pos
+                # Check button clicks
+                new_mode, new_heuristic, new_heuristic_name = ui.check_button_click(pos)
+                if new_mode:
+                    mode = new_mode
+                if new_heuristic:
+                    heuristic = globals()[new_heuristic]  # Convert string to function
+                    heuristic_name = new_heuristic_name
+                # Grid click
+                if pos[1] < WINDOW_SIZE:
+                    grid.handle_click(pos, mode)
             elif event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_s:
-                    mode = 'start'
-                elif event.key == pygame.K_d:  # Use D for End to avoid conflict with E
-                    mode = 'end'
-                elif event.key == pygame.K_w:
-                    mode = 'wall'
-                elif event.key == pygame.K_m:
-                    heuristic = heuristic_manhattan
-                    heuristic_name = "Manhattan"
-                elif event.key == pygame.K_e:
-                    heuristic = heuristic_euclidean
-                    heuristic_name = "Euclidean"
-                elif event.key == pygame.K_c:
-                    heuristic = heuristic_chebyshev
-                    heuristic_name = "Chebyshev"
-                elif event.key == pygame.K_SPACE:
+                if event.key == pygame.K_SPACE:
                     grid.reset_path()
-                    path = best_first_search(grid, grid.start, grid.end, heuristic)
+                    path, visited_count = best_first_search(grid, grid.start, grid.end, heuristic)
                     if path:
                         for r, c in path:
                             if grid.grid[r][c] not in [START, END]:
                                 grid.grid[r][c] = PATH
                     else:
-                        no_path_message = font.render("No path found!", True, RED)
-                        no_path_timer = pygame.time.get_ticks()  # Start timer
+                        no_path_message = ui.font.render("No path found!", True, RED)
+                        no_path_timer = pygame.time.get_ticks()
                 elif event.key == pygame.K_r:
                     grid.reset_path()
-                    no_path_message = None  # Clear message on reset
+                    no_path_message = None
+                    visited_count = 0
 
         # Clear no_path_message after 3 seconds
         if no_path_message and (pygame.time.get_ticks() - no_path_timer > 3000):
             no_path_message = None
 
-        screen.fill(WHITE)
-        grid.draw(screen)
-        # Display current mode and heuristic
-        mode_text = font.render(f"Mode: {mode.capitalize()}", True, BLACK)
-        heuristic_text = font.render(f"Heuristic: {heuristic_name}", True, BLACK)
-        screen.blit(mode_text, (10, WINDOW_SIZE - 50))
-        screen.blit(heuristic_text, (10, WINDOW_SIZE - 30))
-        # Display no path message if exists
-        if no_path_message:
-            screen.blit(no_path_message, (WINDOW_SIZE // 2 - 50, WINDOW_SIZE // 2))
-        pygame.display.flip()
+        ui.draw(grid, mode, heuristic_name, visited_count, no_path_message)
         clock.tick(60)
 
     pygame.quit()

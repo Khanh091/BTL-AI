@@ -12,7 +12,7 @@ def heuristic_chebyshev(a, b):
 
 def best_first_search(grid, start, end, heuristic_func=heuristic_manhattan):
     if not start or not end:
-        return []
+        return [], 0
 
     open_list = []
     heappush(open_list, (heuristic_func(start, end), start))
@@ -27,7 +27,7 @@ def best_first_search(grid, start, end, heuristic_func=heuristic_manhattan):
                 path.append(current)
                 current = came_from[current]
             path.append(start)
-            return path[::-1]
+            return path[::-1], len(visited)
 
         if current in visited:
             continue
@@ -41,4 +41,4 @@ def best_first_search(grid, start, end, heuristic_func=heuristic_manhattan):
                 came_from[neighbor] = current
                 heappush(open_list, (heuristic_func(neighbor, end), neighbor))
 
-    return []  # No path found
+    return [], len(visited)  # No path found
